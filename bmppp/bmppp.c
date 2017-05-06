@@ -165,7 +165,7 @@ unsigned int writeBMP(FILE* f ,long int width , long int height ,pixel* p){
 			if(p->R > 255)p->R = 255;
 			if(p->G > 255)p->G = 255;
 			if(p->B > 255)p->B = 255;
-			int _C = 255;
+			
 			fwrite(&p->B , sizeof(char) , 1 , f);
 			fwrite(&p->G , sizeof(char) , 1 , f);
 			fwrite(&p->R , sizeof(char) , 1 , f);		
