@@ -14,40 +14,40 @@
   *          -save (char* dir)
   * 	     -list 
   *          -evaluate 
-  *	     	 -quit
-  *	     	 -help
+  *          -quit
+  *	     -help
   *DATA STRUCTURE ///////////////////////////////////////////////
   *0x00 - 0x04 (INT) lenght of the list
-  *Value-> 2bytes Weight->4bytes 4bytes->Lenght of the name Name->Indefinite read until '\0'
+  *Value-> 2bytes Weight->4bytes 4bytes->Lenght of the name Name->Indefinite read until 
   *
   * 
   */                                                           
 
 typedef struct grade{char* value; int weight; char* name;}grade;//Grade structure 
 typedef struct Queue{unsigned int size; unsigned int count; ; grade* _array;}Queue;
-typedef enum{false ,true} bool;				 					 //Booleans are really cool
+typedef enum{false ,true} bool;//Booleans are really cool
 
 #define s_com '-'
 #define isEqual( str1 , str2)(strcmp(str1 , str2) == 0)
 #define HELP "-open (directory) \n-add (credit) (name) (grade AA-FF) \n-remove (index) \
-			  \n-list\n-save(directory) \n-evaluate \n-quit \n-about"
-#define ABOUT "Created by Ulascan Ersoy 2017 ITU EEB , GPA Calculator! V0.0.0.1"																		
+			  \n-list\n-save(directory) \n-evaluate \n-quit \n-about \n-replace (index) (credit) (name) (grade AA-FF) \n"
+#define ABOUT "Created by Ulascan Ersoy 2017 ITU EEB , GPA Calculator! V0.0.0.2"																		
 
 const char  READ[2] = "rb";	//File mode Read binary
 const char WRITE[2] = "wb"; //File mode Write binary
 
 //Function prototypes
-int open(char* dir);								//outputs 1 if succesfull
+int open(char* dir);				       //outputs 1 if succesfull
 int add(char* credit , char* name , char* _grade);     //outputs 1 if succesfull
-int _remove(char* index);		              		    //outputs 1 if succesfull
-int save(char* dir);			      			    //outputs 1 if succesfull
-void list(); 				       			        //Doesn't do jack-shit if unsuccesfull
-void evaluate();							        //Doesn't do jack-shit if unsuccesfull
+int replace(char* index , char* credit , char* name , char* _grade); //outputs 1 if succesfull
+int _remove(char* index);		               //outputs 1 if succesfull
+int save(char* dir);			      	       //outputs 1 if succesfull
+void list(); 				       	       //Doesn't do jack-shit if unsuccesfull
+void evaluate();				       //Doesn't do jack-shit if unsuccesfull
 void list_flush();
 char* input(FILE* f);
 unsigned int grade_size(grade g);
 
-long int bytetoInt(char* c){return (c[0] << 24) + (c[1] << 16) + (c[2] << 8) + c[3];}//End of byte-to-int
 
 //List 
 Queue* p_grades , _grades;
@@ -85,14 +85,15 @@ int main(){
 				if(command[j] == '-')	
 				argv[_args] = &command[j]; //add the command
 
-				if(command[j] == ' ')
-				{
+				if(command[j] == ' '){
+
 					command[j] = '\0';
 					_args++;//Fetch the amount of arguments	
 					argv[_args] = &command[j];
 					argv[_args]++;
 					
-				}
+				}//End of if
+
 			}//End of for loop
 			
 			//COMMANDS
@@ -101,7 +102,7 @@ int main(){
 			|| isEqual(argv[0],"-q"    ))
 			quit = true;
 			if(isEqual(argv[0],"-help"  ) 
-		    || isEqual(argv[0],"-h"    ))
+		    	|| isEqual(argv[0],"-h"    ))
 			puts(HELP);
 			if(isEqual(argv[0],"-about" ))
 			puts(ABOUT);
@@ -119,6 +120,8 @@ int main(){
 			evaluate();
 			if(isEqual(argv[0], "-flush" ))
 			list_flush();
+			if(isEqual(argv[0], "-replace"))
+			replace(argv[1] , argv[2] , argv[3] , argv[4]);
 
 			
 
@@ -130,6 +133,48 @@ int main(){
 return 0;
 }  //End of main
 
+//Replaces a given index with new data
+int replace(char* index , char* credit , char* name , char* _grade){
+
+	
+	int _index = atoi(index); //Convert index to integer
+	if(_index > _grades.count - 1)return 0; //Index out of bounds
+
+	grade *pg , g;	//grade
+
+	//Calc the initial size
+	g = _grades._array[_index];
+	unsigned int i_size = grade_size(g);
+
+	unsigned int _credit = atoi(credit);
+	if(_credit <= 0 || _credit >= 10){
+		puts("Error : (-) credits value!");
+		return -1;
+	}//End of if
+	if(strlen(_grade)!= 2 || (!isEqual(_grade , "AA") && !isEqual(_grade , "BA") &&!isEqual(_grade , "BB") &&                       	
+	   !isEqual(_grade , "CB") && !isEqual(_grade , "CC") && !isEqual(_grade , "DC") && !isEqual(_grade , "DD")&& 
+	   !isEqual(_grade , "FF"))) { //Check if the format is correct									
+		puts("Error : Please enter your grade in AA-FF format!");								
+		return -1;
+	}//End of if
+
+	g.name  = name;  	//Name of the class
+	g.value = _grade;	//Grade AA-FF
+	g.weight= _credit;	//Weight for avaraging
+
+	//Reallocate memory 
+	_grades._array = realloc(_grades._array,(_grades.size += (i_size - grade_size(g)) * 8)); //Add the size difference to the total
+	_grades._array[_index] = g;
+													
+
+
+
+
+
+}//End of replace
+
+
+//Opens the file and adds all the items to the list
 int open(char* dir){
 	 
 	FILE* f = fopen( dir , READ );
@@ -167,7 +212,7 @@ int open(char* dir){
 		char grade[2] , name ;
 		char* nm , *gr ,*_cred ,*_name;
 		gr = malloc(16);
-	fread(&weight, sizeof(int) , 1 ,f);
+	fread(&weight , sizeof(int) , 1 ,f);
 	fread(&grade  , sizeof(char)   , 2 ,f);
 	fread(&len    ,sizeof(int)     , 1 ,f);
 	nm = malloc (sizeof(char) * len);
@@ -186,6 +231,8 @@ int open(char* dir){
 	}//End of for-loop
 
 }//End of open
+
+//Takes strings from stdin with indefinete sizes
 char* input(FILE* f){
 
 	int size = 15;
@@ -207,9 +254,12 @@ char* input(FILE* f){
 	return realloc(str , sizeof(char)* size);
 }//End of input
 
+
+//Adds elements to the list
 int add(char* credit , char* name , char* _grade){
 
 	grade *pg , g;	//grade
+
 
 	unsigned int _credit = atoi(credit);
 	if(_credit <= 0 || _credit >= 10){
@@ -231,12 +281,13 @@ int add(char* credit , char* name , char* _grade){
 //	p_grades = malloc((_grades.size + grade_size(g))* 8);
 	_grades._array = realloc(_grades._array,(_grades.size += grade_size(g) * 8));
 	_grades._array[_grades.count] = g;
-	_grades.count++;
+	_grades.count++;														
 
 	return 0;
 
 }//End of add
 
+//Saves the file
 int save(char* dir){
 
 	FILE* f = fopen(dir , WRITE);
@@ -273,6 +324,9 @@ int save(char* dir){
 
 }//End of save
 
+/**Removes the given index from the list
+  *Reallocates the memory
+  */
 int _remove(char* index){
 
 	//Convert to int
@@ -295,9 +349,12 @@ int _remove(char* index){
 	_grades._array = realloc(_grades._array,_grades.size +grade_size(g) * 8);	//Reallocate memory
 	_grades.count--;															//-1 the list size
 	if(_grades.count == 0)_grades.size = 0;
+
 return 0;
 }//End of remove
 
+
+//Prints the list elements
 void list(){
 
 	int i , lenght = _grades.count;			 //Counter setup
@@ -312,6 +369,8 @@ void list(){
 	
 }//End of list
 
+
+//Evaluate the gpa Go through individual chars(ABCDF) and add their respective values to the sum
 void evaluate(){
 
 	int i , j , len  = _grades.count;
@@ -341,18 +400,21 @@ void evaluate(){
 
 }//End of evaluate
 
+//Return the size of a grade element
 unsigned int grade_size(grade g){
 
 	return 12 + strlen(g.name);
 
 }//End of grade_size
 
+
+//Clears the list
 void list_flush(){
 
 	int i ;
 	char* c = "0";
 
-	for(i = 0 ; i <= _grades.count ; i++){
+	for(i = 0 ; _grades.count != 0 ; i++){
 		
 		_remove(c);
 
